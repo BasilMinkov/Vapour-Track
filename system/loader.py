@@ -1,7 +1,7 @@
 import os
 import pygame
 
-from static_variables import STATIC_PATH
+from static_variables import STATIC_PATH, DISPLAY_HIGHT, DISPLAY_WIDTH
 
 
 class Loader:
@@ -14,11 +14,18 @@ class Loader:
 
         # loading spacecraft image
         self.spacecraft_size = (150, 150)
-        self.spacecraftImg = pygame.transform.scale(self.load_image('spacecraft.png'), self.spacecraft_size)
-        self.spacecraft2Img = pygame.transform.scale(self.load_image('spacecraft_2.png'), self.spacecraft_size)
+        self.spacecraft_img_1 = pygame.transform.scale(self.load_image('spacecraft_1.png'), self.spacecraft_size)
+        self.spacecraft_img_2 = pygame.transform.scale(self.load_image('spacecraft_2.png'), self.spacecraft_size)
+        self.spacecraft_img_3 = pygame.transform.scale(self.load_image('spacecraft_3.png'), self.spacecraft_size)
+        self.spacecraft_img_list = [self.spacecraft_img_1, self.spacecraft_img_2, self.spacecraft_img_3]
 
         # loading background image
-        self.backgroundImg = self.load_image('background.jpg')
+        self.background_img_1 = self.load_image('background1.png')
+        self.background_img_2 = self.load_image('background2.png')
+        self.background_img_3 = self.load_image('background3.png')
+
+        # dw(npw)/pw=nph/ph => nph = (dw*ph)/pw
+        self.background_img_3 = pygame.transform.scale(self.background_img_3, (DISPLAY_WIDTH, round((DISPLAY_WIDTH*self.background_img_3.get_rect().size[1])/self.background_img_3.get_rect().size[0])))
 
         # loading explosion image
         self.explosion_1 = pygame.transform.scale(self.load_image('explosion_1.tiff'), (150, 150))

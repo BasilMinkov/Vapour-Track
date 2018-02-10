@@ -1,6 +1,6 @@
 import pygame
 
-from static_variables import DISPLAY_HIGHT
+from static_variables import DISPLAY_HIGHT, DISPLAY_WIDTH
 from loops import Loop
 from loops.level import Level
 from system.loader import Loader
@@ -13,10 +13,9 @@ class Menu(Loop):
         super().__init__(game)
 
         intro = True
-        title = True
 
-        backgroundImgHight = game.static.backgroundImg.get_rect().size[1]
-        print("Background image hight: ", backgroundImgHight)
+        background_img_3_hight = game.static.background_img_3.get_rect().size[1]
+        print("Background image 3 hight: ", background_img_3_hight)
         planet = Loader.load_image('p1.png')
 
         menu = [game.static.new_game,
@@ -26,31 +25,11 @@ class Menu(Loop):
 
         menu_id = 0
 
-        planet_X = -150
-        planet_Y = DISPLAY_HIGHT / 4
-        planet_movementX = 0
-        planet_movementY = 0
-
-        planet_hight = 200
-        planet_width = 200
-        planet_hight_distortion = 0
-        planet_width_distortion = 0
-
-        parallax = 0
-
-        planet = pygame.transform.scale(planet, (planet_hight + 300, planet_width + 300))
-
         while intro:
 
             game.params.clock.tick(60)
 
-            if parallax == backgroundImgHight:
-                parallax = 0
-
-            game.params.gameDisplay.blit(game.static.backgroundImg, (0, (0 - backgroundImgHight) + parallax))
-            game.params.gameDisplay.blit(game.static.backgroundImg, (0, 0 + parallax))
-
-            game.params.gameDisplay.blit(planet, (planet_X + planet_movementX, planet_Y + planet_movementY))
+            game.params.gameDisplay.blit(game.static.background_img_3, (0, 0-background_img_3_hight+DISPLAY_HIGHT))
 
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
@@ -75,20 +54,7 @@ class Menu(Loop):
                             from loops.settings import Settings
                             Settings(game)
 
-            if title:
-                game.params.gameDisplay.blit(game.static.title_1, (0, 0))
-                title = False
-            else:
-                game.params.gameDisplay.blit(game.static.title_2, (0, 0))
-                title = True
-
-            parallax += 1
-
-            planet_movementX += 1
-            planet_movementY = planet_movementX * 0.25
-
-            planet_width_distortion += 1
-            planet_hight_distortion += 1
+            game.params.gameDisplay.blit(game.static.title_1, (0, 0))
 
             game.params.gameDisplay.blit(menu[menu_id], (0, 0))
             pygame.display.update()

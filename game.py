@@ -1,3 +1,5 @@
+import pygame
+
 from system.loader import Loader
 from system.parameters import Parameters
 from loops.menu import Menu
@@ -12,6 +14,7 @@ class Game:
         self.static = Loader()
 
     def run(self):
+        pygame.mixer.Sound.play(game.static.soundtrack, loops=-1)
         Menu(self)
 
 

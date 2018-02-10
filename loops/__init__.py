@@ -1,15 +1,24 @@
 import pygame
 
+from inlets.lsl_inlet import LSLInlet
 from static_variables import DISPLAY_WIDTH, DISPLAY_HIGHT
 
 
 class Loop:
 
     def __init__(self, game):
-
         self.game = game
 
+    def render(self):
+        pygame.display.update()
+
+    def handle_events(self):
         pass
+
+    def set_lsl(self):
+        if self.game.params.control == "BCI":
+            self.lsl = LSLInlet(name='NFBLab_data')
+            state = 0
 
     def text_object(self, text, font):
         """ Returns PyGame text object and it's size """

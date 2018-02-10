@@ -1,8 +1,8 @@
 import random
 import pygame
+import numpy as np
 
 from loops import Loop
-from inlets.lsl_inlet import LSLInlet
 from static_variables import DISPLAY_HIGHT, DISPLAY_WIDTH, WHITE
 
 
@@ -12,148 +12,101 @@ class Level(Loop):
 
         super().__init__(game)
 
-        backgroundImgHight = game.static.backgroundImg.get_rect().size[1]
+        self.background_img_3_hight = game.static.background_img_3.get_rect().size[1]
+        running = True
 
-        x = DISPLAY_WIDTH * 0.45  # OX spacecraft start position
-        y = DISPLAY_HIGHT * 0.8  # OY spacecraft start position
+        self.oscillation = False
+        self.x = DISPLAY_WIDTH * 0.45  # OX spacecraft start position
+        self.y = DISPLAY_HIGHT * 0.5  # OY spacecraft start position
+        self.y_deviation = DISPLAY_HIGHT / 2
+        self.timer = 0
+        self.k = 0.7
+        self.fuel = 0
+        self.amplitude = 0
+        self.parallax = 0
+        self.spacecraft_state = 2
+        self.flame_wait = 0
+        self.noise = -2
+        self.noise_state = 0
+        self.set_lsl()
 
-        x_change = 0
-
-        coin = game.static.coins[0]
-        coin_size = 65
-        coin_startX = random.randrange(500, DISPLAY_WIDTH - 500)
-        coin_startY = -200
-        coin_speed = 5
-
-        gameExit = False
-        speed_up = False
-
-        score = 0
-        distance = 0
-        counter = 0
-        coin_state = 1
-        parallax = 0
-        sps = 0
-        boost = 0
-        delayB = 0
-        delayM = 0
-        delayP = 0
-
-        pygame.mixer.Sound.play(game.static.soundtrack, loops=-1)
-
-        if game.params.control == "BCI":
-            lsl = LSLInlet(name='NFBLab_data')
-            state = 0
-
-        while not gameExit:
+        while running:
 
             game.params.clock.tick(60)  # frames per second
-            parallax += 3
-            parallax += boost
-            if parallax >= backgroundImgHight:
-                parallax = 0
+            self.timer += 0.1
+            self.handle_events()
+            self.render()
 
-            if game.params.control == "Keyboard":
-                for event in pygame.event.get():  # list of events per t
-                    if event.type == pygame.KEYDOWN:
-                        if event.key == pygame.K_ESCAPE:
-                            pygame.quit()
-                            quit()
-                        if event.key == pygame.K_LEFT:
-                            x_change = -20
-                        if event.key == pygame.K_RIGHT:
-                            x_change = 20
-                    if event.type == pygame.KEYUP:
-                        if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
-                            x_change = 0
-            if game.params.control == "BCI":
-                chunk = lsl.get_next_chunk()
-                if chunk is not None:
-                    state = chunk[-1, 0]
-                if state == 1:
-                    x_change = -4
-                elif state == 2:
-                    x_change = 4
+    def handle_flame(self):
+        if self.fuel == 0:
+            self.spacecraft_state = 2
+        if self.fuel > 0:
+            if self.flame_wait >= 0:
+                self.spacecraft_state = 0
+            if self.flame_wait >= 5:
+                self.spacecraft_state = 1
+            if self.flame_wait >= 10:
+                self.flame_wait = -1
+            self.flame_wait += 1
 
-            x += x_change
+    def update_noise(self):
 
-            game.params.gameDisplay.blit(game.static.backgroundImg, (0, 0 - backgroundImgHight + parallax))
-            game.params.gameDisplay.blit(game.static.backgroundImg, (0, 0 + parallax))
-
-            counter += 1
-
-            if counter > 10:
-                counter = 0
-
-            self.ring(coin_startX, coin_startY, coin_size, coin)
-            coin_startY += coin_speed + boost
-            distance += 1 + boost
-            self.demons_dodged(score, distance)
-
-            if counter > 5:
-                self.spacecraft(game.static.spacecraftImg, x, y)
+        if self.noise_state == 0:
+            if self.noise < 5:
+                self.noise += 0.25
             else:
-                self.spacecraft(game.static.spacecraft2Img, x, y)
+                self.noise_state = 1
+        elif self.noise_state == 1:
+            if self.noise > -5:
+                self.noise -= 0.25
+            else:
+                self.noise_state = 0
 
-            if x > DISPLAY_WIDTH - game.static.spacecraft_size[0] or x < 0:
-                pygame.mixer.Sound.stop(game.static.soundtrack)
-                pygame.mixer.Sound.play(game.static.returns)
-                self.crash(game.static.explosion_1, game.static.explosion_2, game.static.backgroundImg, parallax, x, y)
+    def handle_events(self):
 
-            if coin_startY > DISPLAY_HIGHT:
-                coin_startY = -coin_size
-                coin_startX = random.randrange(50, DISPLAY_WIDTH - 50)
+        # Every iteration
 
-            if coin_state < 10:
-                coin = game.static.coins[0]
-            elif 10 <= coin_state < 20:
-                coin = game.static.coins[1]
-            elif 20 <= coin_state < 30:
-                coin = game.static.coins[2]
-            elif 30 <= coin_state < 40:
-                coin = game.static.coins[3]
+        self.handle_flame()
+        self.update_noise()
 
-            coin_state += 1
-            if coin_state >= 40:
-                coin_state = 1
+        if self.fuel != 0:
+            self.oscillation = False
+            self.y_deviation -= 5
+            self.fuel -= 5
+            self.parallax += 1
+        elif self.fuel == 0:
+            if self.oscillation is False:
+                self.amplitude = self.y_deviation
+                self.timer = 0
+                self.oscillation = True
 
-            if y <= coin_startY + coin_size:
+        if self.oscillation is True:
+            self.y_deviation = self.amplitude * np.exp(-self.k * self.timer) * np.cos(self.timer * np.pi / 2)
 
-                if x > coin_startX \
-                        and x < coin_startX + coin_size \
-                        or x + game.static.spacecraft_size[0] > coin_startX \
-                                and x + game.static.spacecraft_size[0] < coin_startX + coin_size \
-                        or x < coin_startX \
-                                and x + game.static.spacecraft_size[0] > coin_startX + coin_size:
+        # Control
 
-                    pygame.mixer.Sound.play(game.static.beep)
-                    coin_startY = -coin_size
-                    coin_startX = random.randrange(500, DISPLAY_WIDTH - 500)
-                    score += 1
-                    speed_up = True
+        if self.game.params.control == "Keyboard":
+            for event in pygame.event.get():  # list of events per t
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        pygame.quit()
+                        quit()
+                    if event.key == pygame.K_UP:
+                        self.fuel = 150
 
-            if speed_up == True:
-                sps += 5
-                # delayB = 30
-                speed_up = False
+        if self.game.params.control == "BCI":
+            chunk = self.lsl.get_next_chunk()
+            if chunk is not None:
+                state = chunk[-1, 0]
+            if state == 1:
+                self.fuel = 150
 
-            if sps > 0 and delayP == 0:
-                boost += 1
-                sps -= 1
-                delayP = 0
-            elif sps > 0:
-                delayP -= 1
-
-            if sps == 0 and boost > 0 and delayM == 0:
-                boost -= 1
-                delayM = 10
-            if sps == 0 and boost > 0:
-                delayM -= 1
-
-            if boost > 30:
-                boost = 30
-
-            pygame.display.update()  # .flip()
+    def render(self):
+        y_deviation = - self.background_img_3_hight + DISPLAY_HIGHT + self.parallax + self.noise
+        self.game.params.gameDisplay.blit(self.game.static.background_img_3, (0 + self.noise, 0 + y_deviation))
+        self.spacecraft(self.game.static.spacecraft_img_list[self.spacecraft_state], self.x, self.y + self.y_deviation)
+        self.show_statistics()
+        super().render()
 
     def spacecraft(self, img, x, y):
         self.game.params.gameDisplay.blit(img, (x, y))
@@ -162,22 +115,7 @@ class Level(Loop):
         img = pygame.transform.scale(img, (coin_size, coin_size))
         self.game.params.gameDisplay.blit(img, (coinX, coinY))
 
-    def demons_dodged(self, count, distance):
+    def show_statistics(self):
         font = pygame.font.Font('/Users/basilminkov/Library/Fonts/9921.otf', 25)
-        text = font.render('Scores: {}, Distance: {} km'.format(str(count), str(distance)), True, WHITE)
+        text = font.render('flamewait: {}, spacecraftstate: {}'.format(str(self.flame_wait), str(self.spacecraft_state)), True, WHITE)
         self.game.params.gameDisplay.blit(text, (5, 0))
-
-    def crash(self, img1, img2, bg, c, x, y):
-        for i in range(1):
-            self.message_display('GAME OVER!')
-            self.game.params.gameDisplay.blit(img1, (x, y))
-            pygame.display.update()
-
-        pygame.time.wait(1000)
-        # gameDisplay.blit(bg, (0, 0 + c))
-        # gameDisplay.blit(img2, (x, y))
-        # message_display('GAME OVER!')
-        # pygame.display.update()
-        # pygame.time.wait(1200)
-        # gameDisplay.blit(bg, (0, 0 + c))
-        Level(self.game)

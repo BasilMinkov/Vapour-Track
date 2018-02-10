@@ -3,7 +3,7 @@
 ## Abstract
 
 ***Vapour Track*** is the brain-computer interface game (BCI), controlled
-by [*human alpha-rhythm waves*](https://www.sciencedirect.com/science/article/pii/001346949390114B?via%3Dihub) [1] power.
+by [*human alpha-rhythm waves*](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3507158/) [1] power
 via [*lab streaming layer (LSL)*](https://www.neurobs.com/pres_docs/html/03_presentation/06_hardware_interfacing/02_lab_streaming_layer.htm).
 
 ## References
