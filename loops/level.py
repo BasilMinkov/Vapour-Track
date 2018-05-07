@@ -6,6 +6,7 @@ import numpy as np
 
 from loops import Loop
 from static_variables import DISPLAY_HIGHT, DISPLAY_WIDTH, WHITE, STATIC_PATH, BLACK
+from inlets.utils import QuantileSmoother
 
 
 class Level(Loop):
@@ -35,6 +36,7 @@ class Level(Loop):
         self.noise_state = 0
         self.waiting_time = 3
         self.set_lsl()
+        self.trail = "Real"
 
         while running:
 
@@ -103,23 +105,36 @@ class Level(Loop):
                     quit()
                 if event.key == pygame.K_UP:
                     self.fuel = 150
-                    self.flash = True
 
         if self.game.params.control == "BCI":
             chunk = self.lsl.get_next_chunk()[0]
+            fs = self.lsl.get_frequency()
+            smoother = QuantileSmoother(fs * 10, 0.92)
+            threshold = smoother.apply(chunk)
             print(chunk)
             if chunk is not None:
                 if time.time() - self.BCI_timer > self.waiting_time:
-                    if False:  # TODO True is Real FB, False is Mock
-                        if max(chunk[:, 0]) > max(chunk[:, 4]):
+                    if self.trail == "Real":
+                        if max(chunk[:, 0]) > threshold[-1]:
                             self.fuel = 150
-                            self.flash = True
                             self.BCI_timer = time.time()
                     else:
                         if max(chunk[:, 2]) > max(chunk[:, 5]):
                             self.fuel = 150
-                            self.flash = True
                             self.BCI_timer = time.time()
+
+            # if chunk is not None:
+            #     if time.time() - self.BCI_timer > self.waiting_time:
+            #         if False:  # TODO True is Real FB, False is Mock
+            #             if max(chunk[:, 0]) > max(chunk[:, 4]):
+            #                 self.fuel = 150
+            #                 self.flash = True
+            #                 self.BCI_timer = time.time()
+            #         else:
+            #             if max(chunk[:, 2]) > max(chunk[:, 5]):
+            #                 self.fuel = 150
+            #                 self.flash = True
+            #                 self.BCI_timer = time.time()
 
     def render(self):
         y_deviation = - self.background_img_3_hight + DISPLAY_HIGHT + self.parallax + self.noise
