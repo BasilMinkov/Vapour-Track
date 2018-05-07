@@ -24,7 +24,7 @@ class Settings(Loop):
 
         settings = True
 
-        backgroundImgHight = game.static.backgroundImg.get_rect().size[1]
+        backgroundImgHight = game.static.background_img_3.get_rect().size[1]
 
         parallax = 0
 

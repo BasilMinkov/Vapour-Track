@@ -9,7 +9,7 @@ class Parameters:
 
     def __init__(self):
         pygame.init()
-        self.gameDisplay = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HIGHT), (pygame.FULLSCREEN | pygame.HWSURFACE))
+        self.gameDisplay = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HIGHT), pygame.FULLSCREEN)
         pygame.display.set_caption("Space Race")
         random.seed(time.time())
         self.clock = pygame.time.Clock()
@@ -20,4 +20,4 @@ class Parameters:
         random.seed(time.time() * 1000)
 
         self.running = True
-        self.control = "Keyboard"
+        self.control = "Key"

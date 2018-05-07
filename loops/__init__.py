@@ -1,7 +1,8 @@
 import pygame
+import os
 
 from inlets.lsl_inlet import LSLInlet
-from static_variables import DISPLAY_WIDTH, DISPLAY_HIGHT
+from static_variables import DISPLAY_WIDTH, DISPLAY_HIGHT, STATIC_PATH
 
 
 class Loop:
@@ -27,7 +28,7 @@ class Loop:
 
     def message_display(self, text):
         """ Makes a text message in the center of a screen """
-        largeText = pygame.font.Font('/Users/basilminkov/Library/Fonts/9921.otf', 90)
+        largeText = pygame.font.Font(os.path.join(STATIC_PATH, "9921.otf"), 90)
         TextSurf, TextRect = self.text_object(text, largeText)
         TextRect.center = ((DISPLAY_WIDTH / 2), (DISPLAY_HIGHT / 2))
         self.game.params.gameDisplay.blit(TextSurf, TextRect)
